@@ -1,0 +1,980 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 46,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "\n",
+    "import torch\n",
+    "from torchvision import datasets, transforms"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 47,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "dataset = datasets.ImageFolder('C:/Users/timev/Desktop/posture_detection/Postures')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 48,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "dataloader = torch.utils.data.DataLoader(dataset,batch_size=32, shuffle=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 49,
+   "metadata": {},
+   "outputs": [
+    {
+     "ename": "SyntaxError",
+     "evalue": "invalid syntax (<ipython-input-49-bcffe91a6fd1>, line 1)",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[1;36m  File \u001b[1;32m\"<ipython-input-49-bcffe91a6fd1>\"\u001b[1;36m, line \u001b[1;32m1\u001b[0m\n\u001b[1;33m    torchvision.transforms.functional.rgb_to_grayscale(dataset: torch.Tensor, num_output_channels: int = 1)\u001b[0m\n\u001b[1;37m                                                              ^\u001b[0m\n\u001b[1;31mSyntaxError\u001b[0m\u001b[1;31m:\u001b[0m invalid syntax\n"
+     ]
+    }
+   ],
+   "source": [
+    "torchvision.transforms.functional.rgb_to_grayscale(dataset: torch.Tensor, num_output_channels: int = 1)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 50,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(<PIL.Image.Image image mode=RGB size=512x512 at 0x2E77C725948>, 0)"
+      ]
+     },
+     "execution_count": 50,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "dataset[0]\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 51,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "%matplotlib inline\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 52,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Label: 1\n"
+     ]
+    },
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 432x288 with 1 Axes>"
+      ]
+     },
+     "metadata": {
+      "needs_background": "light"
+     },
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "image, label = dataset[2300]\n",
+    "plt.imshow(image, cmap='gray')\n",
+    "print('Label:', label)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 53,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import torchvision.transforms as transforms"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 54,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pre_process = transforms.Compose([transforms.ToTensor(),transforms.Grayscale(num_output_channels=1)])\n",
+    "dataset = datasets.ImageFolder('C:/Users/timev/Desktop/posture_detection/Postures',pre_process)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 55,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "torch.Size([1, 512, 512]) 0\n"
+     ]
+    }
+   ],
+   "source": [
+    "img_tensor, label = dataset[0]\n",
+    "print(img_tensor.shape, label)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 56,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(2880, 1920)"
+      ]
+     },
+     "execution_count": 56,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "from torch.utils.data import random_split\n",
+    "\n",
+    "train_ds, val_ds = random_split(dataset, [2880,1920])\n",
+    "len(train_ds), len(val_ds)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 57,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from torch.utils.data import DataLoader\n",
+    "\n",
+    "batch_size = 128\n",
+    "\n",
+    "train_loader = DataLoader(train_ds, batch_size, shuffle=True)\n",
+    "val_loader = DataLoader(val_ds, batch_size)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 58,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#model"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 59,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import torch.nn as nn\n",
+    "\n",
+    "input_size = 512*512\n",
+    "num_classes = 4\n",
+    "\n",
+    "# Logistic regression model\n",
+    "model = nn.Linear(input_size, num_classes)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 60,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "torch.Size([4, 262144])\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "Parameter containing:\n",
+       "tensor([[-0.0008, -0.0004,  0.0015,  ...,  0.0015,  0.0017, -0.0009],\n",
+       "        [ 0.0015,  0.0015, -0.0014,  ...,  0.0010,  0.0003,  0.0003],\n",
+       "        [-0.0011, -0.0015, -0.0019,  ..., -0.0003,  0.0010, -0.0019],\n",
+       "        [-0.0006, -0.0002,  0.0002,  ..., -0.0006, -0.0007, -0.0013]],\n",
+       "       requires_grad=True)"
+      ]
+     },
+     "execution_count": 60,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "print(model.weight.shape)\n",
+    "model.weight"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 61,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "torch.Size([4, 262144])\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "Parameter containing:\n",
+       "tensor([[-0.0008, -0.0004,  0.0015,  ...,  0.0015,  0.0017, -0.0009],\n",
+       "        [ 0.0015,  0.0015, -0.0014,  ...,  0.0010,  0.0003,  0.0003],\n",
+       "        [-0.0011, -0.0015, -0.0019,  ..., -0.0003,  0.0010, -0.0019],\n",
+       "        [-0.0006, -0.0002,  0.0002,  ..., -0.0006, -0.0007, -0.0013]],\n",
+       "       requires_grad=True)"
+      ]
+     },
+     "execution_count": 61,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "print(model.weight.shape)\n",
+    "model.weight"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 62,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "tensor([0, 3, 1, 3, 3, 2, 1, 3, 3, 2, 0, 2, 0, 0, 3, 2, 0, 1, 2, 0, 3, 3, 2, 1,\n",
+      "        1, 1, 0, 2, 0, 2, 2, 0, 2, 0, 1, 2, 3, 2, 2, 3, 2, 0, 2, 0, 0, 0, 2, 0,\n",
+      "        1, 2, 2, 1, 2, 1, 1, 2, 3, 2, 0, 3, 3, 3, 1, 3, 1, 2, 1, 0, 0, 1, 1, 1,\n",
+      "        3, 0, 0, 2, 2, 3, 0, 1, 0, 3, 0, 2, 3, 2, 3, 0, 2, 0, 3, 2, 0, 3, 1, 1,\n",
+      "        2, 0, 3, 2, 0, 3, 1, 0, 1, 1, 2, 0, 2, 0, 2, 2, 1, 0, 1, 2, 3, 1, 0, 0,\n",
+      "        2, 0, 1, 2, 0, 0, 3, 0])\n",
+      "torch.Size([128, 1, 512, 512])\n"
+     ]
+    },
+    {
+     "ename": "RuntimeError",
+     "evalue": "mat1 and mat2 shapes cannot be multiplied (65536x512 and 262144x4)",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[1;31mRuntimeError\u001b[0m                              Traceback (most recent call last)",
+      "\u001b[1;32m<ipython-input-62-d0fe7d306f83>\u001b[0m in \u001b[0;36m<module>\u001b[1;34m\u001b[0m\n\u001b[0;32m      2\u001b[0m     \u001b[0mprint\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mlabels\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      3\u001b[0m     \u001b[0mprint\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mimages\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mshape\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m----> 4\u001b[1;33m     \u001b[0moutputs\u001b[0m \u001b[1;33m=\u001b[0m \u001b[0mmodel\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mimages\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m      5\u001b[0m     \u001b[0mprint\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0moutputs\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m      6\u001b[0m     \u001b[1;32mbreak\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\Anaconda3\\lib\\site-packages\\torch\\nn\\modules\\module.py\u001b[0m in \u001b[0;36m_call_impl\u001b[1;34m(self, *input, **kwargs)\u001b[0m\n\u001b[0;32m   1108\u001b[0m         if not (self._backward_hooks or self._forward_hooks or self._forward_pre_hooks or _global_backward_hooks\n\u001b[0;32m   1109\u001b[0m                 or _global_forward_hooks or _global_forward_pre_hooks):\n\u001b[1;32m-> 1110\u001b[1;33m             \u001b[1;32mreturn\u001b[0m \u001b[0mforward_call\u001b[0m\u001b[1;33m(\u001b[0m\u001b[1;33m*\u001b[0m\u001b[0minput\u001b[0m\u001b[1;33m,\u001b[0m \u001b[1;33m**\u001b[0m\u001b[0mkwargs\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m   1111\u001b[0m         \u001b[1;31m# Do not call functions when jit is used\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m   1112\u001b[0m         \u001b[0mfull_backward_hooks\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mnon_full_backward_hooks\u001b[0m \u001b[1;33m=\u001b[0m \u001b[1;33m[\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m,\u001b[0m \u001b[1;33m[\u001b[0m\u001b[1;33m]\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;32m~\\Anaconda3\\lib\\site-packages\\torch\\nn\\modules\\linear.py\u001b[0m in \u001b[0;36mforward\u001b[1;34m(self, input)\u001b[0m\n\u001b[0;32m    101\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    102\u001b[0m     \u001b[1;32mdef\u001b[0m \u001b[0mforward\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0minput\u001b[0m\u001b[1;33m:\u001b[0m \u001b[0mTensor\u001b[0m\u001b[1;33m)\u001b[0m \u001b[1;33m->\u001b[0m \u001b[0mTensor\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[1;32m--> 103\u001b[1;33m         \u001b[1;32mreturn\u001b[0m \u001b[0mF\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mlinear\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0minput\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mweight\u001b[0m\u001b[1;33m,\u001b[0m \u001b[0mself\u001b[0m\u001b[1;33m.\u001b[0m\u001b[0mbias\u001b[0m\u001b[1;33m)\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0m\u001b[0;32m    104\u001b[0m \u001b[1;33m\u001b[0m\u001b[0m\n\u001b[0;32m    105\u001b[0m     \u001b[1;32mdef\u001b[0m \u001b[0mextra_repr\u001b[0m\u001b[1;33m(\u001b[0m\u001b[0mself\u001b[0m\u001b[1;33m)\u001b[0m \u001b[1;33m->\u001b[0m \u001b[0mstr\u001b[0m\u001b[1;33m:\u001b[0m\u001b[1;33m\u001b[0m\u001b[1;33m\u001b[0m\u001b[0m\n",
+      "\u001b[1;31mRuntimeError\u001b[0m: mat1 and mat2 shapes cannot be multiplied (65536x512 and 262144x4)"
+     ]
+    }
+   ],
+   "source": [
+    "for images, labels in train_loader:\n",
+    "    print(labels)\n",
+    "    print(images.shape)\n",
+    "    outputs = model(images)\n",
+    "    print(outputs)\n",
+    "    break"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 63,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "torch.Size([128, 1, 512, 512])"
+      ]
+     },
+     "execution_count": 63,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "images.shape"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 64,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "tensor([[0.9999, 0.9999, 0.9999,  ..., 0.9999, 0.9999, 0.9999],\n",
+       "        [0.9999, 0.9999, 0.9999,  ..., 0.9999, 0.9999, 0.9999],\n",
+       "        [0.9999, 0.9999, 0.9999,  ..., 0.9999, 0.9999, 0.9999],\n",
+       "        ...,\n",
+       "        [0.9999, 0.9999, 0.9999,  ..., 0.9999, 0.9999, 0.9999],\n",
+       "        [0.9999, 0.9999, 0.9999,  ..., 0.9999, 0.9999, 0.9999],\n",
+       "        [0.9999, 0.9999, 0.9999,  ..., 0.9999, 0.9999, 0.9999]])"
+      ]
+     },
+     "execution_count": 64,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "images.reshape(128, 262144)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 65,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "class MnistModel(nn.Module):\n",
+    "    def __init__(self):\n",
+    "        super().__init__()\n",
+    "        self.linear = nn.Linear(input_size, num_classes)\n",
+    "        \n",
+    "    def forward(self, xb):\n",
+    "        xb = xb.reshape(-1,262144)\n",
+    "        out = self.linear(xb)\n",
+    "        return out\n",
+    "    \n",
+    "model = MnistModel()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 66,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "Linear(in_features=262144, out_features=4, bias=True)"
+      ]
+     },
+     "execution_count": 66,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "model.linear"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 67,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "torch.Size([4, 262144]) torch.Size([4])\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "[Parameter containing:\n",
+       " tensor([[-1.3474e-03,  9.5599e-05,  1.0620e-03,  ...,  1.6486e-03,\n",
+       "           3.2671e-04,  1.5591e-03],\n",
+       "         [-1.5116e-03, -1.7041e-03, -1.6470e-03,  ...,  2.8386e-04,\n",
+       "          -3.7257e-04,  1.4840e-03],\n",
+       "         [-4.8844e-04,  1.4400e-03, -2.6598e-04,  ...,  1.3898e-03,\n",
+       "          -4.1168e-04,  1.0717e-04],\n",
+       "         [ 2.9574e-04,  1.1472e-04,  1.4239e-03,  ...,  1.5887e-03,\n",
+       "           9.7986e-04, -1.4601e-03]], requires_grad=True),\n",
+       " Parameter containing:\n",
+       " tensor([ 5.9225e-04, -4.9367e-05, -5.1095e-04, -1.2484e-03],\n",
+       "        requires_grad=True)]"
+      ]
+     },
+     "execution_count": 67,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "print(model.linear.weight.shape, model.linear.bias.shape)\n",
+    "list(model.parameters())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 68,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "torch.Size([128, 1, 512, 512])\n",
+      "outputs.shape :  torch.Size([128, 4])\n",
+      "Sample outputs :\n",
+      " tensor([[-0.0052,  0.0690,  0.3812, -0.5545],\n",
+      "        [-0.4811, -0.2231,  0.8369, -0.5982]])\n"
+     ]
+    }
+   ],
+   "source": [
+    "for images, labels in train_loader:\n",
+    "    print(images.shape)\n",
+    "    outputs = model(images)\n",
+    "    break\n",
+    "\n",
+    "print('outputs.shape : ', outputs.shape)\n",
+    "print('Sample outputs :\\n', outputs[:2].data)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 69,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import torch.nn.functional as F"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 70,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Sample probabilities:\n",
+      " tensor([[0.2424, 0.2610, 0.3567, 0.1399],\n",
+      "        [0.1445, 0.1871, 0.5399, 0.1285]])\n",
+      "Sum:  1.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Apply softmax for each output row\n",
+    "probs = F.softmax(outputs, dim=1)\n",
+    "\n",
+    "# Look at sample probabilities\n",
+    "print(\"Sample probabilities:\\n\", probs[:2].data)\n",
+    "\n",
+    "# Add up the probabilities of an output row\n",
+    "print(\"Sum: \", torch.sum(probs[0]).item())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 71,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "tensor([2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2,\n",
+      "        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2,\n",
+      "        2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,\n",
+      "        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 2, 2, 2,\n",
+      "        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 2,\n",
+      "        1, 2, 2, 2, 2, 2, 2, 2])\n",
+      "tensor([0.3567, 0.5399, 0.5389, 0.3126, 0.3721, 0.4612, 0.4070, 0.3582, 0.4423,\n",
+      "        0.3816, 0.4216, 0.3314, 0.4423, 0.5130, 0.3653, 0.4250, 0.4867, 0.3837,\n",
+      "        0.3242, 0.4737, 0.3484, 0.3466, 0.4479, 0.4346, 0.4226, 0.4639, 0.3949,\n",
+      "        0.4033, 0.3670, 0.4325, 0.3968, 0.4720, 0.3652, 0.4521, 0.3646, 0.2832,\n",
+      "        0.4788, 0.4960, 0.4482, 0.4204, 0.4082, 0.3454, 0.4641, 0.4493, 0.4351,\n",
+      "        0.3884, 0.4862, 0.4666, 0.4464, 0.3625, 0.3253, 0.4378, 0.4552, 0.4586,\n",
+      "        0.5368, 0.3947, 0.4027, 0.4622, 0.3681, 0.4982, 0.4873, 0.3562, 0.4594,\n",
+      "        0.4527, 0.4230, 0.4989, 0.4369, 0.4109, 0.4124, 0.4341, 0.4023, 0.4644,\n",
+      "        0.4594, 0.4611, 0.4091, 0.3963, 0.3650, 0.3280, 0.3880, 0.4633, 0.4394,\n",
+      "        0.4100, 0.4402, 0.3543, 0.4833, 0.3412, 0.3656, 0.4144, 0.4005, 0.4395,\n",
+      "        0.3580, 0.3550, 0.3626, 0.4928, 0.4174, 0.3153, 0.3866, 0.4047, 0.4829,\n",
+      "        0.3719, 0.4171, 0.3932, 0.3786, 0.3734, 0.4977, 0.4909, 0.4377, 0.3747,\n",
+      "        0.5277, 0.4480, 0.4291, 0.3765, 0.4990, 0.4243, 0.5046, 0.4333, 0.5283,\n",
+      "        0.3407, 0.3867, 0.3986, 0.3944, 0.4966, 0.4162, 0.3912, 0.4006, 0.4687,\n",
+      "        0.4432, 0.3789], grad_fn=<MaxBackward0>)\n"
+     ]
+    }
+   ],
+   "source": [
+    "max_probs, preds = torch.max(probs, dim=1)\n",
+    "print(preds)\n",
+    "print(max_probs)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 72,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "tensor([0, 1, 1, 2, 2, 3, 1, 0, 3, 2, 2, 0, 0, 0, 3, 0, 1, 2, 1, 1, 3, 2, 1, 2,\n",
+       "        1, 1, 2, 2, 2, 3, 3, 2, 1, 3, 2, 2, 3, 3, 2, 3, 1, 3, 2, 0, 1, 2, 1, 2,\n",
+       "        0, 0, 2, 3, 1, 3, 1, 1, 1, 3, 1, 1, 3, 0, 1, 0, 2, 3, 3, 2, 1, 0, 0, 3,\n",
+       "        2, 2, 2, 3, 2, 2, 0, 3, 3, 1, 3, 2, 0, 0, 0, 2, 2, 0, 0, 2, 0, 3, 2, 0,\n",
+       "        2, 0, 0, 1, 0, 2, 1, 1, 2, 3, 2, 2, 3, 3, 2, 3, 1, 0, 1, 3, 1, 0, 2, 3,\n",
+       "        3, 1, 3, 0, 3, 1, 2, 3])"
+      ]
+     },
+     "execution_count": 72,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "labels"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 73,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "tensor(34)"
+      ]
+     },
+     "execution_count": 73,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "torch.sum(preds == labels)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 75,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def accuracy(outputs, labels):\n",
+    "    _, preds = torch.max(outputs, dim=1)\n",
+    "    return torch.tensor(torch.sum(preds == labels).item() / len(preds))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 76,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "tensor(0.2656)"
+      ]
+     },
+     "execution_count": 76,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "accuracy(outputs, labels)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "tensor([[0.2424, 0.2610, 0.3567, 0.1399],\n",
+       "        [0.1445, 0.1871, 0.5399, 0.1285],\n",
+       "        [0.1592, 0.1806, 0.5389, 0.1212],\n",
+       "        [0.1640, 0.3126, 0.3029, 0.2204],\n",
+       "        [0.1817, 0.3093, 0.3721, 0.1368],\n",
+       "        [0.1724, 0.2287, 0.4612, 0.1376],\n",
+       "        [0.2517, 0.2548, 0.4070, 0.0864],\n",
+       "        [0.2711, 0.2503, 0.3582, 0.1203],\n",
+       "        [0.1748, 0.2045, 0.4423, 0.1784],\n",
+       "        [0.2415, 0.1925, 0.3816, 0.1844],\n",
+       "        [0.2345, 0.1962, 0.4216, 0.1477],\n",
+       "        [0.3234, 0.1847, 0.3314, 0.1605],\n",
+       "        [0.1551, 0.2719, 0.4423, 0.1307],\n",
+       "        [0.1594, 0.2112, 0.5130, 0.1164],\n",
+       "        [0.2331, 0.2775, 0.3653, 0.1241],\n",
+       "        [0.2175, 0.2200, 0.4250, 0.1375],\n",
+       "        [0.1418, 0.1970, 0.4867, 0.1745],\n",
+       "        [0.1955, 0.2652, 0.3837, 0.1557],\n",
+       "        [0.2969, 0.2196, 0.3242, 0.1593],\n",
+       "        [0.1923, 0.2087, 0.4737, 0.1253],\n",
+       "        [0.1969, 0.3164, 0.3484, 0.1382],\n",
+       "        [0.2120, 0.3466, 0.3262, 0.1152],\n",
+       "        [0.1947, 0.2156, 0.4479, 0.1417],\n",
+       "        [0.1973, 0.2364, 0.4346, 0.1317],\n",
+       "        [0.1974, 0.2364, 0.4226, 0.1437],\n",
+       "        [0.1717, 0.2281, 0.4639, 0.1363],\n",
+       "        [0.2746, 0.1864, 0.3949, 0.1442],\n",
+       "        [0.2002, 0.2116, 0.4033, 0.1850],\n",
+       "        [0.2325, 0.2790, 0.3670, 0.1215],\n",
+       "        [0.1915, 0.2571, 0.4325, 0.1188],\n",
+       "        [0.2003, 0.2725, 0.3968, 0.1305],\n",
+       "        [0.1686, 0.2334, 0.4720, 0.1260],\n",
+       "        [0.1890, 0.2499, 0.3652, 0.1959],\n",
+       "        [0.1792, 0.2430, 0.4521, 0.1256],\n",
+       "        [0.2192, 0.2649, 0.3646, 0.1513],\n",
+       "        [0.1963, 0.2832, 0.2433, 0.2772],\n",
+       "        [0.2076, 0.1727, 0.4788, 0.1410],\n",
+       "        [0.1884, 0.1995, 0.4960, 0.1161],\n",
+       "        [0.1914, 0.2435, 0.4482, 0.1169],\n",
+       "        [0.2117, 0.2037, 0.4204, 0.1642],\n",
+       "        [0.2323, 0.2093, 0.4082, 0.1502],\n",
+       "        [0.2165, 0.3454, 0.3092, 0.1290],\n",
+       "        [0.1617, 0.2268, 0.4641, 0.1474],\n",
+       "        [0.2040, 0.2345, 0.4493, 0.1122],\n",
+       "        [0.2113, 0.2418, 0.4351, 0.1118],\n",
+       "        [0.1895, 0.2775, 0.3884, 0.1447],\n",
+       "        [0.1823, 0.2310, 0.4862, 0.1005],\n",
+       "        [0.1640, 0.2500, 0.4666, 0.1194],\n",
+       "        [0.1541, 0.2692, 0.4464, 0.1303],\n",
+       "        [0.2072, 0.3081, 0.3625, 0.1222],\n",
+       "        [0.1916, 0.3253, 0.3237, 0.1594],\n",
+       "        [0.1999, 0.2246, 0.4378, 0.1377],\n",
+       "        [0.1876, 0.2349, 0.4552, 0.1222],\n",
+       "        [0.2137, 0.1864, 0.4586, 0.1413],\n",
+       "        [0.1303, 0.2198, 0.5368, 0.1131],\n",
+       "        [0.1928, 0.2442, 0.3947, 0.1683],\n",
+       "        [0.2481, 0.2187, 0.4027, 0.1305],\n",
+       "        [0.1972, 0.2229, 0.4622, 0.1177],\n",
+       "        [0.2299, 0.2846, 0.3681, 0.1174],\n",
+       "        [0.2053, 0.1837, 0.4982, 0.1127],\n",
+       "        [0.2191, 0.1834, 0.4873, 0.1103],\n",
+       "        [0.2107, 0.3429, 0.3562, 0.0901],\n",
+       "        [0.1693, 0.2458, 0.4594, 0.1255],\n",
+       "        [0.1939, 0.2429, 0.4527, 0.1105],\n",
+       "        [0.1830, 0.2671, 0.4230, 0.1269],\n",
+       "        [0.1683, 0.2118, 0.4989, 0.1210],\n",
+       "        [0.1819, 0.2494, 0.4369, 0.1318],\n",
+       "        [0.1747, 0.2850, 0.4109, 0.1294],\n",
+       "        [0.2105, 0.2450, 0.4124, 0.1321],\n",
+       "        [0.1944, 0.2516, 0.4341, 0.1199],\n",
+       "        [0.1836, 0.3087, 0.4023, 0.1054],\n",
+       "        [0.2185, 0.1927, 0.4644, 0.1244],\n",
+       "        [0.1770, 0.2577, 0.4594, 0.1059],\n",
+       "        [0.2022, 0.1928, 0.4611, 0.1439],\n",
+       "        [0.1509, 0.3280, 0.4091, 0.1121],\n",
+       "        [0.2307, 0.2248, 0.3963, 0.1482],\n",
+       "        [0.1916, 0.2570, 0.3650, 0.1864],\n",
+       "        [0.2056, 0.3215, 0.3280, 0.1449],\n",
+       "        [0.2278, 0.2180, 0.3880, 0.1663],\n",
+       "        [0.1718, 0.2297, 0.4633, 0.1352],\n",
+       "        [0.2294, 0.2303, 0.4394, 0.1009],\n",
+       "        [0.2001, 0.2510, 0.4100, 0.1389],\n",
+       "        [0.2099, 0.2147, 0.4402, 0.1352],\n",
+       "        [0.2532, 0.2283, 0.3543, 0.1642],\n",
+       "        [0.1867, 0.1879, 0.4833, 0.1421],\n",
+       "        [0.2568, 0.2802, 0.3412, 0.1217],\n",
+       "        [0.1796, 0.3335, 0.3656, 0.1213],\n",
+       "        [0.2637, 0.1968, 0.4144, 0.1250],\n",
+       "        [0.1678, 0.2923, 0.4005, 0.1395],\n",
+       "        [0.1906, 0.2605, 0.4395, 0.1094],\n",
+       "        [0.2132, 0.3249, 0.3580, 0.1038],\n",
+       "        [0.1601, 0.3550, 0.3353, 0.1496],\n",
+       "        [0.2012, 0.3626, 0.3081, 0.1281],\n",
+       "        [0.2156, 0.1739, 0.4928, 0.1177],\n",
+       "        [0.2257, 0.2441, 0.4174, 0.1127],\n",
+       "        [0.2364, 0.3116, 0.3153, 0.1367],\n",
+       "        [0.2113, 0.2445, 0.3866, 0.1576],\n",
+       "        [0.1751, 0.2760, 0.4047, 0.1442],\n",
+       "        [0.2183, 0.1950, 0.4829, 0.1039],\n",
+       "        [0.2639, 0.2144, 0.3719, 0.1498],\n",
+       "        [0.2249, 0.2226, 0.4171, 0.1354],\n",
+       "        [0.2053, 0.2809, 0.3932, 0.1206],\n",
+       "        [0.1957, 0.2486, 0.3786, 0.1772],\n",
+       "        [0.2647, 0.2289, 0.3734, 0.1330],\n",
+       "        [0.1802, 0.2050, 0.4977, 0.1172],\n",
+       "        [0.1947, 0.2136, 0.4909, 0.1007],\n",
+       "        [0.2185, 0.2144, 0.4377, 0.1293],\n",
+       "        [0.1523, 0.3413, 0.3747, 0.1317],\n",
+       "        [0.1702, 0.2063, 0.5277, 0.0958],\n",
+       "        [0.1943, 0.2458, 0.4480, 0.1120],\n",
+       "        [0.1727, 0.2689, 0.4291, 0.1293],\n",
+       "        [0.2063, 0.2640, 0.3765, 0.1533],\n",
+       "        [0.1529, 0.2203, 0.4990, 0.1278],\n",
+       "        [0.1980, 0.2554, 0.4243, 0.1223],\n",
+       "        [0.2011, 0.1655, 0.5046, 0.1289],\n",
+       "        [0.1872, 0.2603, 0.4333, 0.1192],\n",
+       "        [0.1478, 0.1826, 0.5283, 0.1412],\n",
+       "        [0.3407, 0.1879, 0.3000, 0.1714],\n",
+       "        [0.1821, 0.3033, 0.3867, 0.1279],\n",
+       "        [0.1994, 0.2443, 0.3986, 0.1578],\n",
+       "        [0.1779, 0.3944, 0.3163, 0.1113],\n",
+       "        [0.1861, 0.1776, 0.4966, 0.1397],\n",
+       "        [0.1888, 0.2739, 0.4162, 0.1212],\n",
+       "        [0.2064, 0.2726, 0.3912, 0.1298],\n",
+       "        [0.2205, 0.2687, 0.4006, 0.1102],\n",
+       "        [0.1828, 0.2191, 0.4687, 0.1295],\n",
+       "        [0.1695, 0.3081, 0.4432, 0.0792],\n",
+       "        [0.1901, 0.2800, 0.3789, 0.1509]], grad_fn=<SoftmaxBackward0>)"
+      ]
+     },
+     "execution_count": 77,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "probs"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 78,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "loss_fn = F.cross_entropy"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 79,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "tensor(1.4920, grad_fn=<NllLossBackward0>)\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Loss for current batch of data\n",
+    "loss = loss_fn(outputs, labels)\n",
+    "print(loss)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 86,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def fit(epochs, lr, model, train_loader, val_loader, opt_func=torch.optim.SGD):\n",
+    "    optimizer = opt_func(model.parameters(), lr)\n",
+    "    history = [] # for recording epoch-wise results\n",
+    "    \n",
+    "    for epoch in range(epochs):\n",
+    "        \n",
+    "        # Training Phase \n",
+    "        for batch in train_loader:\n",
+    "            loss = model.training_step(batch)\n",
+    "            loss.backward()\n",
+    "            optimizer.step()\n",
+    "            optimizer.zero_grad()\n",
+    "        \n",
+    "        # Validation phase\n",
+    "        result = evaluate(model, val_loader)\n",
+    "        model.epoch_end(epoch, result)\n",
+    "        history.append(result)\n",
+    "\n",
+    "    return history"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 87,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def evaluate(model, val_loader):\n",
+    "    outputs = [model.validation_step(batch) for batch in val_loader]\n",
+    "    return model.validation_epoch_end(outputs)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 88,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "class MnistModel(nn.Module):\n",
+    "    def __init__(self):\n",
+    "        super().__init__()\n",
+    "        self.linear = nn.Linear(input_size, num_classes)\n",
+    "        \n",
+    "    def forward(self, xb):\n",
+    "        xb = xb.reshape(-1, 262144)\n",
+    "        out = self.linear(xb)\n",
+    "        return out\n",
+    "    \n",
+    "    def training_step(self, batch):\n",
+    "        images, labels = batch \n",
+    "        out = self(images)                  # Generate predictions\n",
+    "        loss = F.cross_entropy(out, labels) # Calculate loss\n",
+    "        return loss\n",
+    "    \n",
+    "    def validation_step(self, batch):\n",
+    "        images, labels = batch \n",
+    "        out = self(images)                    # Generate predictions\n",
+    "        loss = F.cross_entropy(out, labels)   # Calculate loss\n",
+    "        acc = accuracy(out, labels)           # Calculate accuracy\n",
+    "        return {'val_loss': loss, 'val_acc': acc}\n",
+    "        \n",
+    "    def validation_epoch_end(self, outputs):\n",
+    "        batch_losses = [x['val_loss'] for x in outputs]\n",
+    "        epoch_loss = torch.stack(batch_losses).mean()   # Combine losses\n",
+    "        batch_accs = [x['val_acc'] for x in outputs]\n",
+    "        epoch_acc = torch.stack(batch_accs).mean()      # Combine accuracies\n",
+    "        return {'val_loss': epoch_loss.item(), 'val_acc': epoch_acc.item()}\n",
+    "    \n",
+    "    def epoch_end(self, epoch, result):\n",
+    "        print(\"Epoch [{}], val_loss: {:.4f}, val_acc: {:.4f}\".format(epoch, result['val_loss'], result['val_acc']))\n",
+    "    \n",
+    "model = MnistModel()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 89,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "{'val_loss': 1.5061067342758179, 'val_acc': 0.24635416269302368}"
+      ]
+     },
+     "execution_count": 89,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "result0 = evaluate(model, val_loader)\n",
+    "result0"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 90,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Epoch [0], val_loss: 35.5555, val_acc: 0.2510\n",
+      "Epoch [1], val_loss: 22.9084, val_acc: 0.4943\n",
+      "Epoch [2], val_loss: 23.5625, val_acc: 0.5578\n",
+      "Epoch [3], val_loss: 19.4305, val_acc: 0.3526\n",
+      "Epoch [4], val_loss: 8.9395, val_acc: 0.6026\n"
+     ]
+    }
+   ],
+   "source": [
+    "history1 = fit(5, 0.001, model, train_loader, val_loader)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.4"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
